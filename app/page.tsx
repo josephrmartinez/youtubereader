@@ -1,3 +1,5 @@
+'use client'
+
 import Image from "next/image";
 import Link from "next/link";
 import { use, useState } from "react";
@@ -7,7 +9,7 @@ import { use, useState } from "react";
 export default function Home() {
 
   const [url, setUrl] = useState("")
-  const [blogPost, setBlogPost] = useState("")
+  const [blogPost, setBlogPost] = useState("blogy blog")
 
   const handleGenerateBlogPost = async () => {
     try {
@@ -16,12 +18,13 @@ export default function Home() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ url }),
+            body: JSON.stringify({url: url}),
         });
 
         if (response.ok) {
             const data = await response.json();
-            setBlogPost(data.generated_blog_post);
+            console.log(data)
+            setBlogPost(data);
         } else {
             console.error('Failed to generate the blog post');
         }
@@ -34,7 +37,7 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="w-full max-w-3xl items-center justify-around font-mono text-sm lg:flex">
         <input 
-          type="url" 
+          type="text" 
           name="youtubelink" 
           id="youtubelink" 
           placeholder="paste youtube link" 
@@ -46,6 +49,7 @@ export default function Home() {
           className="shadow w-auto rounded-xl bg-green-700/90 active:bg-green-700 text-gray-100 p-4">generate blog post</button>
         
       </div>
+      <div>{blogPost}</div>
       
     </main>
   );
