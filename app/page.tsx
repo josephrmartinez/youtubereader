@@ -9,9 +9,11 @@ import { use, useState } from "react";
 export default function Home() {
 
   const [url, setUrl] = useState("")
-  const [blogPost, setBlogPost] = useState("blogy blog")
+  const [blogPost, setBlogPost] = useState("<div></div>")
+  const [loading, setLoading] = useState(false)
 
   const handleGenerateBlogPost = async () => {
+    setLoading(true)
     try {
         const response = await fetch('/api/generate-blog-post', {
             method: 'POST',
@@ -24,14 +26,21 @@ export default function Home() {
         if (response.ok) {
             const data = await response.json();
             console.log(data)
-            setBlogPost(data);
+            setBlogPost(data.generated_blog_post);
         } else {
             console.error('Failed to generate the blog post');
         }
     } catch (error) {
         console.error('Error:', error);
+    } finally {
+      setLoading(false)
     }
 };
+const jsxElement = (
+  <div
+    dangerouslySetInnerHTML={{ __html: blogPost }}
+  />
+);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
@@ -46,10 +55,14 @@ export default function Home() {
           className="backdrop-blur-2xl w-[28rem] rounded-xl border bg-gray-100 p-4" />
         <button
           onClick={handleGenerateBlogPost} 
-          className="shadow w-auto rounded-xl bg-green-700/90 active:bg-green-700 text-gray-100 p-4">generate blog post</button>
+          className="shadow w-auto rounded-xl bg-green-700/90 active:bg-green-700 text-gray-100 p-4">
+            {!loading ? `generate blog post` : `loading`}
+            </button>
         
       </div>
-      <div>{blogPost}</div>
+      <div>
+        {jsxElement}
+      </div>
       
     </main>
   );
