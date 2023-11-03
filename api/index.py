@@ -37,13 +37,13 @@ async def generate_blog_post(request_data: GenerateBlogPostRequest):
     openai.api_key = config('OPENAI_API_KEY')
 
     messages = [
-        {"role": "system", "content": "You are a helpful assistant and skilled copywriter."},
-        {"role": "user", "content": f"Generate a blog post from the following YouTube transcript:\n\n{transcript} /// Return your response formatted as JSX code with tailwind styling."}
+        {"role": "system", "content": "You are a helpful assistant and skilled copywriter. You are skilled at taking transcripts of live talks and turning them into blog posts with the following style: Tone: Informative and Educational. Authoritative: Speak with authority and confidence about the topic. Formality: Informal, yet Technical: The text has an informal tone but discusses technical concepts. It's not overly formal or rigid. Structure: Start with a brief introduction or a catchy statement to grab the reader's attention. Then organize the content into clear sections or categories. Vocabulary: Use technical terms, but strive for clear and straightforward language to ensure broad understanding. Incorporate domain-specific words when discussing specific topics. Perspective: First Person. Sentence Length and Complexity: Use varied sentence structures to keep the content engaging. Voice: Maintain a confident and assertive voice similar to the original transcript."},
+        {"role": "user", "content": f"Generate a blog post from the following YouTube transcript:\n\n{transcript} /// Return your response with markdown formatting."}
     ]
 
     try:
         completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-3.5-turbo-16k",
             messages=messages
         )
 
