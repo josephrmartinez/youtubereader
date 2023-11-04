@@ -8,8 +8,6 @@
   --background-end-rgb: 255, 255, 255;
 }
 
-
-
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
@@ -36,6 +34,8 @@ h2 {
   margin-top: 1rem;
   margin-bottom: 1rem;
 }
+
+
 
 p {
   font-size: 1.2rem;
