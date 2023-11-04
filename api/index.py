@@ -1,11 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
 from pydantic import BaseModel
-import requests
 import os
 from decouple import config
 import openai
-
 
 
 app = FastAPI()
@@ -33,7 +31,7 @@ async def generate_blog_post(request_data: GenerateBlogPostRequest):
     # Get the YouTube transcript
     transcript = get_youtube_transcript(url)
 
-    # Send the transcript to the OpenAI API (GPT-3.5 Turbo)
+    # Get OpenAI API key
     openai.api_key = config('OPENAI_API_KEY')
 
     messages = [
@@ -46,7 +44,7 @@ async def generate_blog_post(request_data: GenerateBlogPostRequest):
             model="gpt-3.5-turbo-16k",
             messages=messages
         )
-
+        print(completion)
         generated_blog_post = completion.choices[0].message['content']
         return {'generated_blog_post': generated_blog_post}
     except Exception as e:
