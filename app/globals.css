@@ -27,11 +27,11 @@ h1 {
   font-size: 2.5rem;
   line-height: normal;
   font-weight: 800;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
 }
 
 h2 {
-  font-size: 1.8rem;
+  font-size: 1.4rem;
   font-weight: 800;
   margin-top: 1rem;
   margin-bottom: 1rem;
@@ -40,6 +40,11 @@ h2 {
 p {
   font-size: 1.2rem;
   color:rgb(42, 59, 59);
-  font-family:Georgia, 'Times New Roman', Times, serif
+  font-family:Georgia, 'Times New Roman', Times, serif;
+  margin-bottom: 2rem;
+}
 
+li {
+  margin-left: 3rem;
+  margin-bottom: 2rem;
 }
