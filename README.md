@@ -5,7 +5,7 @@ youtube reader is a simple site that transforms youtube videos into articles. Fo
 This is a hybrid Next.js + Python app that uses Next.js as the frontend and FastAPI as the API backend.
 
 ## Demo
-
+[![youtube reader demo](/public/demothumbnail.jpg 'youtube reader demo')](https://youtu.be/1RlsDUeVydU)
 
 ## How It Works
 
