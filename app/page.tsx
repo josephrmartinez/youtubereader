@@ -4,12 +4,15 @@ import { useState } from "react";
 import Markdown from "markdown-to-jsx";
 import { SpinnerGap } from "@phosphor-icons/react";
 
+
 export default function Home() {
 
   const [url, setUrl] = useState<string>("")
+  const [task, setTask] = useState<string>("")
   const [videoID, setVideoID] = useState<string | null>("")
   const [loading, setLoading] = useState<boolean>(false)
   const [blogPost, setBlogPost] = useState<string>("")
+  const [text, setText] = useState<string>("")
   
 
   const extractVideoIdFromString = (urlString: string): string | null => {
@@ -22,25 +25,25 @@ export default function Home() {
     }
   }
   
-  const handleGenerateBlogPost = async () => {
+  const performTask = async () => {
     setLoading(true)
     const extractedVideoID: string | null = extractVideoIdFromString(url)
     setVideoID(extractedVideoID)
     try {
-        const response = await fetch('/api/generate-blog-post', {
+        const response = await fetch('/api/perform-task', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({url: url}),
+            body: JSON.stringify({url: url, task: task}),
         });
 
         if (response.ok) {
             const data = await response.json();
             console.log(data)
-            setBlogPost(data.generated_blog_post);
+            setText(data.completion.text)
         } else {
-            console.error('Failed to generate the blog post');
+            console.error('Failed to perform the task');
         }
     } catch (error) {
         console.error('Error:', error);
@@ -51,7 +54,7 @@ export default function Home() {
 
   return (
     <main className="flex flex-col items-center min-h-screen w-screen">
-      <div className="my-24 items-center justify-around font-mono text-sm">
+      <div className="my-24 grid grid-rows-3 gap-5 items-center font-mono text-sm">
         <input 
           type="text" 
           name="youtubelink" 
@@ -60,11 +63,19 @@ export default function Home() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           className="backdrop-blur-2xl w-[28rem] rounded-xl border-2 border-gray-100 bg-gray-100 p-4" />
+          <input 
+          type="text" 
+          name="task" 
+          id="task" 
+          placeholder="define task" 
+          value={task}
+          onChange={(e) => setTask(e.target.value)}
+          className="backdrop-blur-2xl w-[28rem] rounded-xl border-2 border-gray-100 bg-gray-100 p-4" />
         <button
-          onClick={handleGenerateBlogPost} 
-          className="shadow w-56 h-14 ml-8 rounded-xl bg-green-700/90 active:bg-green-700 text-gray-100 font-semibold p-4">
+          onClick={performTask} 
+          className="shadow w-56 h-14 rounded-xl mx-auto bg-green-700/90 active:bg-green-700 text-gray-100 font-semibold p-4">
             {!loading ? (
-              `generate blog post`
+              `generate`
             ) : (
               <div className="flex flex-row justify-center items-center">
                 <span>loading</span>
@@ -79,7 +90,8 @@ export default function Home() {
         src={`https://img.youtube.com/vi/${videoID}/hqdefault.jpg`}
         alt=""
         className="w-full mb-6" />}
-        <Markdown>{blogPost}</Markdown>
+        <Markdown>{text}</Markdown>
+        
       </div>
       
     </main>

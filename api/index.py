@@ -9,8 +9,9 @@ import openai
 app = FastAPI()
 
 # Create a Pydantic model for the request body
-class GenerateBlogPostRequest(BaseModel):
+class TaskRequestData(BaseModel):
     url: str
+    task: str
 
 # Function to get the YouTube transcript from a given URL
 def get_youtube_transcript(url):
@@ -23,10 +24,13 @@ def get_youtube_transcript(url):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get transcript: {str(e)}")
 
-# Define the API route for generating a blog post
-@app.post("/api/generate-blog-post")
-async def generate_blog_post(request_data: GenerateBlogPostRequest):
+
+
+# Define the API route for performing a task
+@app.post("/api/perform-task")
+async def perform_task(request_data: TaskRequestData):
     url = request_data.url
+    task = request_data.task
 
     # Get the YouTube transcript
     transcript = get_youtube_transcript(url)
@@ -35,8 +39,8 @@ async def generate_blog_post(request_data: GenerateBlogPostRequest):
     openai.api_key = config('OPENAI_API_KEY')
 
     messages = [
-        {"role": "system", "content": "You are a helpful assistant and skilled copywriter. You are skilled at taking transcripts of live talks and turning them into blog posts with the following style: Tone: Informative and Educational. Speak with authority and confidence about the topic. Formality: Informal, yet Technical. Structure: Organize the content into clear sections. Return your response with markdown formatting. The title is heading level one, section subtitles are heading level two. The blog post may also include ordered and unordered lists. Remove references to the live event like [applause] and [music] from the post. Vocabulary: Use technical terms, but strive for clear and straightforward language to ensure broad understanding. Incorporate domain-specific words when discussing specific topics. Perspective: First Person. Sentence Length and Complexity: Use varied sentence structures to keep the content engaging. Voice: Maintain a style similar to the original transcript."},
-        {"role": "user", "content": f"Generate a blog post from the following YouTube transcript:\n\n{transcript} /// Return your response in markdown formatting."}
+        {"role": "system", "content": "You are a helpful assistant. I will provide a transcript of a youtube video and ask you to perform a task."},
+        {"role": "user", "content": f"Perform this task: {task} /// Using the following YouTube transcript:\n\n{transcript} /// Return your response in markdown formatting."}
     ]
 
     try:
@@ -45,8 +49,8 @@ async def generate_blog_post(request_data: GenerateBlogPostRequest):
             messages=messages
         )
         print(completion)
-        generated_blog_post = completion.choices[0].message['content']
-        return {'generated_blog_post': generated_blog_post}
+        # TODO return just text and cost attributes
+        return {'completion': {'text': completion.choices[0].message['content'], 'usage': completion.usage}}
     except Exception as e:
         print(f"Exception: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate blog post: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate response: {str(e)}")
