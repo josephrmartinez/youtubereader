@@ -1,16 +1,24 @@
 from fastapi import FastAPI, HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
+from pytube import YouTube
 from pydantic import BaseModel
 import os
 from decouple import config
 import openai
+import tiktoken
 
 
 app = FastAPI()
 
 # Create a Pydantic model for the request body
-class GenerateBlogPostRequest(BaseModel):
+class TaskRequestData(BaseModel):
     url: str
+    task: str
+
+def count_tokens(text: str):
+    encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+    num_tokens = len(encoding.encode(text))
+    return num_tokens
 
 # Function to get the YouTube transcript from a given URL
 def get_youtube_transcript(url):
@@ -23,30 +31,57 @@ def get_youtube_transcript(url):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get transcript: {str(e)}")
 
-# Define the API route for generating a blog post
-@app.post("/api/generate-blog-post")
-async def generate_blog_post(request_data: GenerateBlogPostRequest):
+
+
+# Define the API route for performing a task
+@app.post("/api/perform-task")
+async def perform_task(request_data: TaskRequestData):
     url = request_data.url
+    task = request_data.task
 
     # Get the YouTube transcript
     transcript = get_youtube_transcript(url)
+
+    # Count tokens of transcript
+    transcript_tokens = count_tokens(transcript)
+    print("transcript tokens:", transcript_tokens)
+    
+    # Exit if token count is greater than 10k
+    if transcript_tokens > 10000:
+        raise HTTPException(status_code=400, detail="Transcript exceeds token limit (10,000 tokens).")
+
+
+    # Get the video title and author
+    yt = YouTube(url)
+    video_name = yt.title
+    channel_name = yt.author
 
     # Get OpenAI API key
     openai.api_key = config('OPENAI_API_KEY')
 
     messages = [
-        {"role": "system", "content": "You are a helpful assistant and skilled copywriter. You are skilled at taking transcripts of live talks and turning them into blog posts with the following style: Tone: Informative and Educational. Speak with authority and confidence about the topic. Formality: Informal, yet Technical. Structure: Organize the content into clear sections. Return your response with markdown formatting. The title is heading level one, section subtitles are heading level two. The blog post may also include ordered and unordered lists. Remove references to the live event like [applause] and [music] from the post. Vocabulary: Use technical terms, but strive for clear and straightforward language to ensure broad understanding. Incorporate domain-specific words when discussing specific topics. Perspective: First Person. Sentence Length and Complexity: Use varied sentence structures to keep the content engaging. Voice: Maintain a style similar to the original transcript."},
-        {"role": "user", "content": f"Generate a blog post from the following YouTube transcript:\n\n{transcript} /// Return your response in markdown formatting."}
+        {"role": "system", "content": "You are a helpful assistant. I will provide a transcript of a youtube video and ask you to perform a task."},
+        {"role": "user", "content": f"Perform this task: {task} /// Using the following YouTube transcript:\n\n{transcript} /// Return your response in markdown formatting."}
     ]
 
     try:
         completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-16k",
+            model="gpt-3.5-turbo-1106",
             messages=messages
         )
         print(completion)
-        generated_blog_post = completion.choices[0].message['content']
-        return {'generated_blog_post': generated_blog_post}
+        input_usage = completion.usage['prompt_tokens']
+        input_cost = (input_usage / 1000) * 0.001
+
+        output_usage = completion.usage['completion_tokens']
+        output_cost = (output_usage / 1000) * 0.002
+
+        total_cost = input_cost + output_cost
+
+        return {'completion': {
+            'text': completion.choices[0].message['content'], 
+            'cost': total_cost, 
+            'channel': channel_name}}
     except Exception as e:
         print(f"Exception: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate blog post: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate response: {str(e)}")
