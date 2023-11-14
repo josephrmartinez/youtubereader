@@ -33,13 +33,11 @@ def count_tokens(text: str):
 def get_youtube_transcript(url):
     print("get_youtube_transcript url:", url)
     try:
-        # video_id = url.split("v=")[1]  # Extract the video ID from the YouTube URL
         transcript = YouTubeTranscriptApi.get_transcript(url)
         text = " ".join([item['text'] for item in transcript])
         return text
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get transcript: {str(e)}")
-
 
 
 # Define the API route for performing a task
@@ -51,23 +49,15 @@ async def perform_task(request_data: TaskRequestData):
     # Get the YouTube transcript
     transcript = get_youtube_transcript(url)
 
-    
-    # print("task", task)
-    # print("transcript", transcript)
+    # Declare model variable with gpt-3.5-turbo-1106 as default
+    model = "gpt-3.5-turbo-1106"
 
-    # # Count tokens of transcript
-    # transcript_tokens = count_tokens(transcript)
-    # print("transcript tokens:", transcript_tokens)
-    
-    # # Exit if token count is greater than 10k
-    # if transcript_tokens > 10000:
-    #     raise HTTPException(status_code=400, detail="Transcript exceeds token limit (10,000 tokens).")
+    # Count the tokens taken by just the transcript
+    token_count = count_tokens(transcript)
 
-
-    # # Get the video title and author
-    # yt = YouTube(url)
-    # video_name = yt.title
-    # channel_name = yt.author
+    # Switch to gpt-4-1106-preview model for longer transcripts
+    if token_count > 10000:
+        model = "gpt-4-1106-preview"
 
     # Get OpenAI API key
     openai.api_key = config('OPENAI_API_KEY')
@@ -79,15 +69,25 @@ async def perform_task(request_data: TaskRequestData):
 
     try:
         completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-1106",
+            model=model,
             messages=messages
         )
-        print(completion)
+        
+        # Calculate cost based on model selected
         input_usage = completion.usage['prompt_tokens']
-        input_cost = (input_usage / 1000) * 0.001
+
+        if model == "gpt-3.5-turbo-1106":
+            input_cost = (input_usage / 1000) * 0.001
+        elif model == "gpt-4-1106-preview":
+            input_cost = (input_usage / 1000) * 0.01
+
 
         output_usage = completion.usage['completion_tokens']
-        output_cost = (output_usage / 1000) * 0.002
+        
+        if model == "gpt-3.5-turbo-1106":
+            output_cost = (output_usage / 1000) * 0.002
+        elif model == "gpt-4-1106-preview":
+            output_cost = (output_usage / 1000) * 0.03
 
         total_cost = input_cost + output_cost
 
