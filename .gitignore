@@ -38,3 +38,4 @@ next-env.d.ts
 
 api/__pycache__/*.pyc
 *.pyc
+index.cpython-311.pyc
