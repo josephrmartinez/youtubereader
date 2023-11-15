@@ -37,3 +37,4 @@ yarn-error.log*
 next-env.d.ts
 
 api/__pycache__/*.pyc
+*.pyc
